@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vpnapp/login-pages/buttons/blue_button.dart';
+import 'package:vpnapp/login-pages/credentials_form_field_style.dart';
 import 'package:vpnapp/login-pages/login_main.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -22,24 +24,51 @@ class _SignupState extends State<Signup> {
       setState(() {
         _isLoading = true;
       });
-      final userCredentials = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
 
-      print(userCredentials);
+      try {
+        final userCredentials = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
 
-      setState(() {
-        _isLoading = false;
-      });
+        print(userCredentials);
 
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Successfully Signed Up')));
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Successfully Signed Up')));
 
-      Navigator.push(context, MaterialPageRoute(builder: (ctx) => LoginMain()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (ctx) => LoginMain()),
+        );
+      } on FirebaseAuthException catch (error) {
+        String errorMessage = 'Signup failed';
+
+        if (error.code == 'email-already-in-use') {
+          errorMessage = 'This email is already in use.';
+        } else if (error.code == 'invalid-email') {
+          errorMessage = 'This email address is invalid.';
+        } else if (error.code == 'weak-password') {
+          errorMessage = 'Password should be at least 6 characters.';
+        }
+
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      } catch (e) {
+        // Catch any other unexpected error
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong, please try again.')),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -60,71 +89,49 @@ class _SignupState extends State<Signup> {
             ),
             const SizedBox(height: 40),
 
-            Container(
-              width: 296,
-              height: 56,
-              decoration: BoxDecoration(
-                border: BoxBorder.all(color: Color(0x3300091F), width: 1),
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    hintText: 'Sign Up',
-                    hintStyle: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  validator: (value) {
-                    if (value == null ||
-                        value.isEmpty ||
-                        !EmailValidator.validate(value)) {
-                      return 'Enter a valid Email';
-                    }
-
-                    return null;
-                  },
+            CredentialsFormFieldStyle(
+              fieldsType: TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  hintText: 'Sign Up',
+                  hintStyle: Theme.of(context).textTheme.labelSmall,
                 ),
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty ||
+                      !EmailValidator.validate(value)) {
+                    return 'Enter a valid Email';
+                  }
+
+                  return null;
+                },
               ),
             ),
             const SizedBox(height: 13),
 
-            Container(
-              width: 296,
-              height: 56,
-              decoration: BoxDecoration(
-                border: BoxBorder.all(color: Color(0x3300091F), width: 1),
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: TextFormField(
-                  obscureText: true,
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    hintText: 'Password',
-                    hintStyle: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  validator: (value) {
-                    if (value == null ||
-                        value.isEmpty ||
-                        value.trim().length <= 6) {
-                      return 'Enter a password greater than 6 characters';
-                    }
-                    return null;
-                  },
+            CredentialsFormFieldStyle(
+              fieldsType: TextFormField(
+                obscureText: true,
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  hintText: 'Password',
+                  hintStyle: Theme.of(context).textTheme.labelSmall,
                 ),
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty ||
+                      value.trim().length <= 6) {
+                    return 'Enter a password greater than 6 characters';
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(height: 30),

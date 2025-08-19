@@ -1,82 +1,70 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vpnapp/countries/catlab.dart';
+import 'package:vpnapp/Widgets/catlab.dart';
+import 'package:vpnapp/Widgets/countries_overlay1.dart';
 import 'package:vpnapp/data/data.dart';
-import 'package:vpnapp/appbar/appbarsetting.dart';
-import 'package:vpnapp/countries/countries_overlay1.dart';
-import 'package:vpnapp/model/calssapproach.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({
+    required this.dialog1,
+    required this.dialog2,
+    required this.goCountries,
+    super.key,
+  });
+
+  final VoidCallback dialog1;
+  final VoidCallback dialog2;
+  final void Function() goCountries;
 
   @override
-  State<HomePage> createState() {
-    return _HomePageState();
-  }
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  void dialog1() {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => Dialog(
-            insetAnimationDuration: Duration(seconds: 1),
-            insetAnimationCurve: Curves.fastLinearToSlowEaseIn,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              child: Text(
-                'Free Servers For Limited Time \nConnection !',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineMedium!.copyWith(fontSize: 19),
-              ),
-            ),
-          ),
-    );
-  }
-
-  void dialog2() {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => Dialog(
-            insetAnimationDuration: Duration(seconds: 1),
-            insetAnimationCurve: Curves.fastLinearToSlowEaseIn,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              child: Text(
-                'Premium Servers For UnLimited  \nTime Connection !',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineMedium!.copyWith(fontSize: 19),
-              ),
-            ),
-          ),
-    );
-  }
-
+class _HomePageState extends ConsumerState<HomePage> {
   @override
-  Widget build(context) {
-    return   Column(
-              children: [
-                Catlab(text: 'Free Countries', showdialog: dialog1),
-                for (final countries in freecountries)
-                  countries.id == 'prem'
-                      ? Catlab(text: 'Free Countries', showdialog: dialog1)
-                      : CountryOverlay1(
-                        countryname: countries.couname,
-                        locations: countries.coloc,
-                        picture: countries.copic,
-                      ),
-              ],
+  Widget build(BuildContext context) {
+    // Pre-filter the lists first
+    final freeList = freecountries.where((c) => c.id == 'free').toList();
+    final premList = freecountries.where((c) => c.id == 'pre').toList();
 
-             
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 56),
+      itemCount: 2 + freeList.length + premList.length, // Headers + both lists
+      itemBuilder: (context, index) {
+        // Free Countries Header
+        if (index == 0) {
+          return Catlab(text: 'Free Countries', showdialog: widget.dialog1);
+        }
+
+        // Free Countries List
+        if (index <= freeList.length) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: CountryOverlay1(
+              gotocountriesScreen: widget.goCountries,
+              key: ValueKey('free_${freeList[index - 1].id}'),
+              country: freeList[index - 1],
             ),
+          );
+        }
+
+        // Premium Countries Header
+        if (index == freeList.length + 1) {
+          return Catlab(text: 'Premium Countries', showdialog: widget.dialog2);
+        }
+
+        // Premium Countries List
+        final premIndex = index - freeList.length - 2;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: CountryOverlay1(
+            gotocountriesScreen: widget.goCountries,
+            key: ValueKey('prem_${premList[premIndex].id}'),
+            country: premList[premIndex],
+          ),
+        );
+      },
+    );
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "266368257016",
+    "project_id": "vpnbackend",
+    "storage_bucket": "vpnbackend.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266368257016:android:e45679b7166da20146640d",
+        "android_client_info": {
+          "package_name": "com.example.vpn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_PdgP-neCwj6dDkLdXwHsBHqAx0p8XFQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

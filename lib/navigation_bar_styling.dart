@@ -53,3 +53,14 @@ class BNBCustomPainter extends CustomPainter {
     return false;
   }
 }
+
+class customPainter extends StatelessWidget {
+  const customPainter({super.key});
+
+  @override
+  Widget build(context) {
+    final size = MediaQuery.of(context).size;
+
+    return CustomPaint(size: Size(size.width, 75), painter: BNBCustomPainter());
+  }
+}

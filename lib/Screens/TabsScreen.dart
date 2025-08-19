@@ -1,149 +1,171 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:vpnapp/Screens/settings.dart';
-import 'package:vpnapp/appbar/appbarsetting.dart';
-import 'package:vpnapp/countries/catlab.dart';
-import 'package:vpnapp/countries/countries_overlay1.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:vpnapp/Screens/ConnectionsScreen.dart';
 import 'package:vpnapp/Screens/homepage.dart';
-import 'package:vpnapp/countries/screen_button.dart';
-import 'package:vpnapp/data/data.dart';
+import 'package:vpnapp/screens/settings.dart';
+import 'package:vpnapp/Widgets/drawer.dart';
+import 'package:vpnapp/Widgets/tabscreen_bottom_buttons.dart';
+import 'package:vpnapp/appbar/appbarsetting.dart';
+import 'package:vpnapp/appbar/else_appbar.dart';
 import 'package:vpnapp/navigation_bar_styling.dart';
 
-class TabsScreen extends StatefulWidget {
+class TabsScreen extends ConsumerStatefulWidget {
   const TabsScreen({super.key});
 
   @override
-  State<TabsScreen> createState() {
-    return _TabsScreenState();
-  }
+  ConsumerState<TabsScreen> createState() => _TabsScreenState();
 }
 
-class _TabsScreenState extends State<TabsScreen> {
-
+class _TabsScreenState extends ConsumerState<TabsScreen> {
+  late Widget painter = customPainter();
   int _selectedIndex = 0;
-  void dialog1() {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => Dialog(
-            insetAnimationDuration: Duration(seconds: 1),
-            insetAnimationCurve: Curves.fastLinearToSlowEaseIn,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              child: Text(
-                'Free Servers For Limited Time \nConnection !',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineMedium!.copyWith(fontSize: 19),
-              ),
-            ),
-          ),
-    );
-  }
+  late final PageController _pageController;
 
-  void dialog2() {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => Dialog(
-            insetAnimationDuration: Duration(seconds: 1),
-            insetAnimationCurve: Curves.fastLinearToSlowEaseIn,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              child: Text(
-                'Premium Servers For UnLimited  \nTime Connection !',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineMedium!.copyWith(fontSize: 19),
-              ),
-            ),
-          ),
-    );
-  }
-
-  bool _Status = false;
-  
- void gotoScreen(String name){
-  if(name=='disconnect'){
- _selectedIndex=1;
-
-  }
-  if (name == 'settings')
-  {_selectedIndex=2;}  
- }
-
+  late final List<Widget> _screens;
+  late final List<Widget> _appBars;
+  late final List<Color> _appBarColors;
+  late final List<double?> _toolbarHeights;
 
   @override
-  Widget build(context) {
+  void initState() {
+    super.initState();
 
-Widget currentScreen = HomePage();
+    _pageController = PageController(initialPage: _selectedIndex);
 
-if(_selectedIndex==1){
-  return currentScreen = SettingsScreen();
-}
+    _screens = [
+      HomePage(
+        goCountries: () {
+          _gotoScreen(1);
+        },
+        dialog1: _showFreeDialog,
+        dialog2: _showPremiumDialog,
+      ),
+      ConnectionsScreen(
+        goscreen: () {
+          _gotoScreen(0);
+        },
+      ),
+      const SettingsScreen(),
+    ];
 
+    _appBars = [const AppbarSettings(), const ElseAppbar(), const ElseAppbar()];
 
-    final Size size = MediaQuery.of(context).size;
+    _appBarColors = [
+      const Color(0xFF185BFF),
+      const Color.fromARGB(0, 255, 255, 255),
+      const Color.fromARGB(0, 255, 255, 255),
+    ];
+
+    _toolbarHeights = [140, null, null];
+
+    painter = customPainter();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  final _freeDialog = Dialog(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    child: Padding(
+      padding: const EdgeInsets.all(15),
+      child: Text(
+        'Free Servers For Limited Time Connection!',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          fontFamily: 'gilroy',
+          color: Colors.black,
+        ),
+      ),
+    ),
+  );
+
+  final _premiumDialog = Dialog(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    child: Padding(
+      padding: const EdgeInsets.all(15),
+      child: Text(
+        'Premium Servers For Unlimited Time Connection!',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          fontFamily: 'gilroy',
+          color: Colors.black,
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _showFreeDialog() async {
+    await showDialog(context: context, builder: (ctx) => _freeDialog);
+  }
+
+  Future<void> _showPremiumDialog() async {
+    await showDialog(context: context, builder: (ctx) => _premiumDialog);
+  }
+
+  void _gotoScreen(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.jumpToPage(index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        backgroundColor: Colors.white,
+        child: DrawerWidget(
+          gotosetting: () {
+            _gotoScreen(2);
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       appBar: AppBar(
-        toolbarHeight: 140,
+        automaticallyImplyLeading: false,
+        toolbarHeight: _toolbarHeights[_selectedIndex],
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(30),
             bottomRight: Radius.circular(30),
           ),
         ),
-        backgroundColor: const Color(0xFF185BFF),
-        flexibleSpace: const AppbarSettings(),
+        backgroundColor: _appBarColors[_selectedIndex],
+        flexibleSpace: _appBars[_selectedIndex],
       ),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: HomePage()
+          PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            children: _screens,
           ),
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            top: MediaQuery.of(context).size.height - 250,
-            child: CustomPaint(
-              size: Size(size.width, size.height),
-              painter: BNBCustomPainter(),
-            ),
+            child: SafeArea(child: painter),
           ),
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: Row(
-              spacing: 38,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ScreenButton(
-                  status1: _Status,
-                  icon: LucideIcons.map,
-                  text: 'Countries',
-                  onPressed: ,
-                ),
-                ScreenButton(
-                  icon: PhosphorIcons.broadcast(),
-                  text: 'Disconnect',
-                  onPressed: gotoDisconnect,
-                ),
-                ScreenButton(
-                  icon: PhosphorIcons.gearSix(),
-                  text: 'Settings',
-                  onPressed: () {},
-                ),
-              ],
+            child: TabscreenBottomButtons(
+              currentIndex: _selectedIndex,
+              currentScreen0: () => _gotoScreen(0),
+              currentScreen1: () => _gotoScreen(1),
+              currentScreen2: () => _gotoScreen(2),
             ),
           ),
         ],
