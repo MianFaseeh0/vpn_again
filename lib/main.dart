@@ -1,91 +1,43 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:vpnapp/Screens/settings.dart';
+import 'package:vpnapp/core/theme/app_theme.dart';
+import 'package:vpnapp/features/auth/presentation/providers/auth_providers.dart';
+import 'package:vpnapp/features/auth/presentation/views/welcome_view.dart';
+import 'package:vpnapp/features/navigation/presentation/views/tabs_view.dart';
 import 'package:vpnapp/firebase_options.dart';
-import 'package:vpnapp/Screens/TabsScreen.dart';
-import 'package:vpnapp/Screens/homepage.dart';
-import 'package:vpnapp/login-pages/welcome_screen.dart';
 
-final theme = ThemeData(
-  textTheme: TextTheme(
-    headlineLarge: TextStyle(fontFamily: 'gilroybold'),
-    bodyMedium: TextStyle(
-      fontFamily: 'gilroy',
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-    ),
-    labelMedium: TextStyle(
-      fontFamily: 'gilroy',
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-    ),
-    labelSmall: TextStyle(
-      fontFamily: 'gilroy',
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-    ),
-    headlineMedium: TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 14,
-      fontFamily: 'gilroy',
-      color: Colors.black,
-    ),
-    headlineSmall: TextStyle(
-      fontWeight: FontWeight.w500,
-      fontSize: 10,
-      fontFamily: 'gilroy',
-      color: const Color(0x6600091F),
-    ),
-    bodySmall: TextStyle(
-      fontWeight: FontWeight.w500,
-      fontSize: 12,
-      fontFamily: 'gilroy',
-      color: Color.fromARGB(255, 0, 0, 0),
-    ),
-    bodyLarge: TextStyle(
-      fontSize: 14,
-      color: const Color.fromARGB(255, 0, 0, 0),
-      fontWeight: FontWeight.w700,
-      fontFamily: 'gilroy',
-    ),
-    labelLarge: TextStyle(
-      fontWeight: FontWeight.w700,
-      fontSize: 12,
-      fontFamily: 'gilroy',
-      color: const Color.fromARGB(162, 25, 25, 25),
-    ),
-    titleSmall: TextStyle(
-      fontWeight: FontWeight.w600,
-      fontSize: 10,
-      fontFamily: 'gilroy',
-      color: const Color.fromARGB(255, 31, 31, 31),
-    ),
-  ),
-);
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(
-    ProviderScope(
-      child: MaterialApp(
-        theme: theme,
-        home: StreamBuilder(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, Snapshot) {
-            if (Snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (Snapshot.data != null) {
-              return const TabsScreen();
-            }
-            return WelcomeScreen();
-          },
-        ),
+  runApp(const ProviderScope(child: VpnApp()));
+}
+
+class VpnApp extends StatelessWidget {
+  const VpnApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(theme: AppTheme.light, home: const AuthGate());
+  }
+}
+
+class AuthGate extends ConsumerWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+
+    return authState.when(
+      data: (user) => user != null ? const TabsView() : const WelcomeView(),
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       ),
-    ),
-  );
+      error: (error, stackTrace) => Scaffold(
+        body: Center(child: Text('Something went wrong: $error')),
+      ),
+    );
+  }
 }
